@@ -1,0 +1,128 @@
+/***************************************************************************
+ * fitness.c
+ *
+ * This file contains a collection of routines used to compute the fitness
+ * given values of radius, mass, inc, etc...
+ *
+ ***************************************************************************/
+
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <iomanip>
+#include <cmath>
+#include <exception>
+#include <vector>
+#include <string>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "Struct.h"
+#include "fitness.h"
+#include "nrutil.h"
+
+double Fitness( struct Parameters para, struct Parameters lo, struct Parameters hi, struct Parameters delta, int numradius, int nummass, int numbins,
+		long *binrank, double *fit_nz, long *histo){
+
+  double fitness(0);
+  unsigned int bin, nzrank;
+
+  /* std::cout << "Fitness: radius = " << para.radius 
+	    << " mass = " << para.mass
+	    << " inc = " << para.inc
+	    << " theta = " << para.theta
+	    << " time = " << para.time
+	    << " rho = " << para.rho
+	    << " temperature = " << para.temp
+	    << " distance = " << para.distance
+	    << std::endl;*/
+
+  bin = BinValue(para,lo,hi,delta,numradius,nummass,numbins);
+  // std::cout << "bin = " << bin << std::endl;
+  //std::cout << "histo[bin] = " << histo[bin] << std::endl;
+
+  if (histo[bin] > 0 && bin > 0){
+    nzrank = binrank[bin];			
+    fitness = fit_nz[nzrank];
+  }
+  else{
+    // If the parameter values are out of bounds, then bin = 0 -- output giant fitness value
+    // If there was no fitness value recorded, then output giant fitness value
+    if (bin == 0)
+      fitness = -1e6;
+    else
+      fitness = -1e5;
+  }
+
+  return fitness;
+}
+
+
+
+
+
+unsigned int BinValue( struct Parameters para, struct Parameters lo, struct Parameters hi, struct Parameters delta, int numradius, int nummass, int numbins)
+{
+  // binvalue > 0 for good values
+  // binvalue = 0 for value out of range
+
+  unsigned int binvalue(1);
+
+  int rbin,mbin,ibin,thetabin,timebin,rhobin,tempbin,distancebin;
+
+  // std::cout << "BinValue: Hello! radius = " << para.radius << std::endl;
+
+  // Compute the bins for each parameter
+  rbin = 1 + (para.radius - lo.radius)/delta.radius;
+  mbin = 1 + (para.mass - lo.mass)/delta.mass;
+  ibin = 1 + (para.inc - lo.inc)/delta.inc;
+  thetabin = 1 + (para.theta - lo.theta)/delta.theta;
+  timebin = 1 + (para.time - lo.time)/delta.time;
+  rhobin = 1 + (para.rho - lo.rho)/delta.rho;
+  tempbin = 1 + (para.temp - lo.temp)/delta.temp;
+  distancebin = 1 + (para.distance - lo.distance)/delta.distance;
+
+  if ( rbin < 1 || mbin < 1 || ibin < 1 || thetabin < 1 ||
+       timebin < 1 || rhobin < 1 || tempbin < 1 || distancebin < 1 ){
+    binvalue = 0;
+    /*std::cout << "ERROR bin=0!!!!! " << std::endl;
+    std::cout << "rbin = " << rbin
+	      << " mbin = " << mbin
+	      << " ibin = " << ibin
+	      << " thetabin = " << thetabin
+	      << " timebin = " << timebin
+	      << " rhobin = " << rhobin
+	      << " tempbin = " << tempbin
+	      << " distancebin = " << distancebin
+	      << std::endl;*/
+  }
+
+  if ( rbin > numradius || mbin > nummass || ibin > numbins || thetabin > numbins || 
+       timebin > numbins || rhobin > numbins || tempbin > numbins || distancebin > numbins){
+    binvalue = 0;
+    /*std::cout << "ERROR bin>numbins!!!!! " << std::endl;
+    std::cout << "rbin = " << rbin
+	      << " mbin = " << mbin
+	      << " ibin = " << ibin
+	      << " thetabin = " << thetabin
+	      << " timebin = " << timebin
+	      << " rhobin = " << rhobin
+	      << " tempbin = " << tempbin
+	      << " distancebin = " << distancebin
+	      << std::endl;*/
+  }
+
+  if (binvalue == 1)
+	binvalue =  1 + (rbin-1) + 
+	  numradius*((mbin-1) + 
+		     nummass*((ibin-1) + 
+			      numbins*((thetabin-1) + 
+				       numbins*((timebin-1) + 
+						numbins*((rhobin-1) 
+							 + numbins*((tempbin-1) + 
+								    numbins*(distancebin-1)))))));
+
+
+  return (binvalue);
+}

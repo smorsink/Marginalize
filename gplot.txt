@@ -1,0 +1,12 @@
+#set view 180,90
+#splot "sigma1.txt", "sigma2.txt", "sigma3.txt"
+
+#plot "out1d1e4.txt" using 1:3, "out1d1e4.txt", "out1d1e5.txt", "out1d1e6.txt"
+
+#splot "out2d1e4.txt" using 1:2:4,   "out2d176.txt"
+
+#plot "out2d1e4.txt" using 1:4,   "out2d1e7.txt" using 1:3, "xprob.txt"
+
+#plot "out2d1e4.txt" using 2:4,   "out2d1e7.txt" using 2:3, "yprob.txt"
+
+splot "out2d1e7.txt", "out2d1e7.txt" using 1:2:5
