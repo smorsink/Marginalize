@@ -25,7 +25,30 @@ struct Parameters {
   double distance;
 };
 
+struct Prob1d {
 
+  double median;
+  double xl1;
+  double xl2;
+  double xl3;
+  double xr1;
+  double xr2;
+  double xr3;
+  double pmed;
+  double pl1;
+  double pl2;
+  double pl3;
+  double pr1;
+  double pr2;
+  double pr3;
+  
+};
+
+struct Prob2d{
+  double sigma1;
+  double sigma2;
+  double sigma3;
+};
 
 
 

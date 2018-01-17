@@ -74,7 +74,8 @@ int main ( int argc, char** argv ) try {  // argc, number of cmd line args;
   double
     distance_lo(0.1),distance_hi(0.6);
 
-  struct Parameters para, lo, hi, delta;
+  struct Parameters para, lo, hi, delta, average;
+  
 
   double min_loglik(10000000), max_loglik(-1000000);
   double fudge(1.0);
@@ -298,10 +299,8 @@ int main ( int argc, char** argv ) try {  // argc, number of cmd line args;
 	if (para.time > 1.0) para.time-= 1.0;
 
 	unsigned int bin = BinValue(para,lo,hi,delta,numradius,nummass,numbins);
-	//std::cout << " bin = " << bin << std::endl;
 
 	histo[bin] += 1;
-	//std::cout << " histo[" << bin << "] = " << histo[bin] << std::endl;
 
 	if (histo[bin] == 1){
 	    // We have a new non-zero fitness bin!
@@ -309,17 +308,6 @@ int main ( int argc, char** argv ) try {  // argc, number of cmd line args;
 	    bin_nz[nz] = bin;
 	    fit_nz[nz] = fitness;
 	    binrank[bin] = nz;
-
-	/*std::cout << "New Bin: fitness = " << fitness 
-		    << " radius = " << para.radius 
-		    << " mass = " << para.mass
-		    << " inc = " << para.inc
-		    << " theta = " << para.theta
-		    << " time = " << para.time
-		    << " rho = " << para.rho
-		    << " temperature = " << para.temp
-		    << " distance = " << para.distance
-		    << std::endl; */
 
 	}
 	else{
@@ -340,7 +328,7 @@ int main ( int argc, char** argv ) try {  // argc, number of cmd line args;
 		    << " temperature = " << para.temp
 		    << " distance = " << para.distance
 		    << std::endl;
-	}
+	  }
 
 	if (fitness < min_loglik){
 	  min_loglik = fitness;
@@ -394,20 +382,15 @@ std::cout << "Fitness: radius = " << para.radius
 
     long int **histogram = imatrix(0,numradius,0,nummass);
 
-    out.open("histtestRM.txt");    
-    for (unsigned int i(1);i<=numradius;i++){ //Uncomment this line if you want to run the loop
+  
+    for (unsigned int i(1);i<=numradius;i++){ //Initialize the Histogram 
       for (unsigned int j(1);j<=nummass;j++){
 	histogram[i][j] = 0;
-	out << rvals[i] << " " 
-	    << mvals[j] << " " 
-	    << histogram[i][j] << " "
-		<< i << " " << j 
-	    << std::endl;
       }
     }
-    out.close();
 
-      ll1 = Fitness(para1,lo,hi,delta,numradius,nummass,numbins, binrank, fit_nz, histo);
+
+    ll1 = Fitness(para1,lo,hi,delta,numradius,nummass,numbins, binrank, fit_nz, histo);
    
     std::cout <<"Step 1: \t"
 		  << para1.radius << "\t"
@@ -421,24 +404,48 @@ std::cout << "Fitness: radius = " << para.radius
 		  << ll1 << "\t"
 		  << std::endl;
 
-    //unsigned int nsteps(2e10);
     double r;
     long int yes(0);
     double acceptance(0.0);
-    //double fudge(1.0);
-
+ 
     out.open("trace.txt");
 
+    average.radius = 0; 
+      average.mass = 0; 
+      average.inc = 0;
+      average.theta = 0;
+      average.time = 0;
+      average.rho = 0;
+      average.temp = 0;
+      average.distance = 0;
+    
+    std::cout 
+      << "Average radius = "	  << average.radius << "\t"
+      << " mass = " << average.mass << "\t"
+      << " inc = " << average.inc << "\t"
+      << " theta = " << average.theta << "\t"
+      << " time = " << average.time << "\t"
+      << " rho = "  << average.rho << "\t"
+      << " temp = " << average.temp << "\t"
+      << " distance = " << average.distance << "\t"
+      << " acceptance = " << acceptance 
+		  << std::endl;
 
     std::cout << "chainlength = " << chainlength << std::endl;
 
     for (unsigned int i(1);i<chainlength;i++){
 
-      //std::cout << "i = " << i << std::endl;
+      // Compute Average Values
 
-      // std::cout 
-      //<< "MT Step: fitness1 = " << ll1 << std::endl;
-
+      average.radius += para1.radius;
+      average.mass += para1.mass;
+      average.inc += para1.inc;
+      average.theta += para1.theta;
+      average.time += para1.time;
+      average.rho += para1.rho;
+      average.temp += para1.temp;
+      average.distance += para1.distance;
+    
       // Create a proposal
       para2.radius = NormalDev(para1.radius,delta.radius*fudge);
       para2.mass = NormalDev(para1.mass,delta.mass*fudge);
@@ -513,6 +520,32 @@ std::cout << "Fitness: radius = " << para.radius
     }
     out.close();
 
+    // Calculate Average Values
+
+    average.radius /= (1.0*chainlength);
+    average.mass /= (1.0*chainlength);
+    average.inc /= (1.0*chainlength);
+    average.theta /= (1.0*chainlength);
+    average.time /= (1.0*chainlength);
+    average.rho /= (1.0*chainlength);
+    average.temp /= (1.0*chainlength);
+    average.distance /= (1.0*chainlength);
+
+    std::cout 
+      << "Average radius = "	  << average.radius << "\t"
+      << " mass = " << average.mass << "\t"
+      << " inc = " << average.inc << "\t"
+      << " theta = " << average.theta << "\t"
+      << " time = " << average.time << "\t"
+      << " rho = "  << average.rho << "\t"
+      << " temp = " << average.temp << "\t"
+      << " distance = " << average.distance << "\t"
+      << " acceptance = " << acceptance 
+		  << std::endl;
+    
+    
+
+    
 	// Normalize the probability functions to 1.0
 	
 
@@ -566,7 +599,7 @@ std::cout << "Fitness: radius = " << para.radius
 	out << rvals[i] << " " 
 	    << mvals[j] << " " 
 	    << probRM[i][j] << " "
-		<< i << " " << j 
+	  //	<< i << " " << j 
 	    << std::endl;
       }
     }
@@ -581,7 +614,7 @@ std::cout << "Fitness: radius = " << para.radius
     out.close();
 
     out.open("histM.txt");    
-    for (unsigned int i(1);i<=nummass;i++){ //Uncomment this line if you want to run the loop
+    for (unsigned int i(1);i<=nummass;i++){ 
 	out << mvals[i] << " " 
 	    << probM[i] << " "
 	    << std::endl;
@@ -590,7 +623,7 @@ std::cout << "Fitness: radius = " << para.radius
 
 
         out.open("histi.txt");    
-    for (unsigned int i(1);i<=numbins;i++){ //Uncomment this line if you want to run the loop
+    for (unsigned int i(1);i<=numbins;i++){ 
 	out << ivals[i] << " " 
 	    << probi[i] << " "
 	    << std::endl;
@@ -598,7 +631,7 @@ std::cout << "Fitness: radius = " << para.radius
     out.close();
 
         out.open("histtheta.txt");    
-    for (unsigned int i(1);i<=numbins;i++){ //Uncomment this line if you want to run the loop
+    for (unsigned int i(1);i<=numbins;i++){ 
 	out << thetavals[i] << " " 
 	    << probtheta[i] << " "
 	    << std::endl;
@@ -606,7 +639,7 @@ std::cout << "Fitness: radius = " << para.radius
     out.close();
 
         out.open("histtime.txt");    
-    for (unsigned int i(1);i<=numbins;i++){ //Uncomment this line if you want to run the loop
+    for (unsigned int i(1);i<=numbins;i++){ 
 	out << timevals[i] << " " 
 	    << probtime[i] << " "
 	    << std::endl;
@@ -614,7 +647,7 @@ std::cout << "Fitness: radius = " << para.radius
     out.close();
 
         out.open("histrho.txt");    
-    for (unsigned int i(1);i<=numbins;i++){ //Uncomment this line if you want to run the loop
+    for (unsigned int i(1);i<=numbins;i++){ 
 	out << rhovals[i] << " " 
 	    << probrho[i] << " "
 	    << std::endl;
@@ -622,7 +655,7 @@ std::cout << "Fitness: radius = " << para.radius
     out.close();
 
         out.open("histtemp.txt");    
-    for (unsigned int i(1);i<=numbins;i++){ //Uncomment this line if you want to run the loop
+    for (unsigned int i(1);i<=numbins;i++){ 
 	out << tempvals[i] << " " 
 	    << probtemp[i] << " "
 	    << std::endl;
@@ -630,7 +663,7 @@ std::cout << "Fitness: radius = " << para.radius
     out.close();
 
         out.open("histdistance.txt");    
-    for (unsigned int i(1);i<=numbins;i++){ //Uncomment this line if you want to run the loop
+    for (unsigned int i(1);i<=numbins;i++){ 
 	out << distancevals[i] << " " 
 	    << probdistance[i] << " "
 	    << std::endl;
@@ -707,8 +740,57 @@ std::cout << "Fitness: radius = " << para.radius
 	}
       } // End of for-i-loop
 
+      struct Prob1d Radius, Mass;
       
+      Radius = ProbContours1D( rvals, probR, average.radius, numradius);
+
+      out.open("gplotR.txt");
+      out << "unset arrow" << std::endl;
+      out << "set arrow from " << Radius.xl3 << ",0 to " << Radius.xl3 << "," << Radius.pl3 << " nohead" << std::endl;
+      out << "set arrow from " << Radius.xl2 << ",0 to " << Radius.xl2 << "," << Radius.pl2 << " nohead" << std::endl;
+      out << "set arrow from " << Radius.xl1 << ",0 to " << Radius.xl1 << "," << Radius.pl1 << " nohead" << std::endl;
+      out << "set arrow from " << Radius.median << ",0 to " << Radius.median << "," << Radius.pmed << " nohead" << std::endl;
+      out << "set arrow from " << Radius.xr1 << ",0 to " << Radius.xr1 << "," << Radius.pr1 << " nohead" << std::endl;
+      out << "set arrow from " << Radius.xr2 << ",0 to " << Radius.xr2 << "," << Radius.pr2 << " nohead" << std::endl;
+      out << "set arrow from " << Radius.xr3 << ",0 to " << Radius.xr3 << "," << Radius.pr3 << " nohead" << std::endl;
+      out << "set xlabel \"Radius\"" << std::endl;
+      out << "plot \"histR.txt\" with lines notitle" << std::endl;     
+      out.close();
+
+      Mass = ProbContours1D( mvals, probM, average.mass, nummass);
+
+      out.open("gplotM.txt");
+      out << "unset arrow" << std::endl;
+      out << "set arrow from " << Mass.xl3 << ",0 to " << Mass.xl3 << "," << Mass.pl3 << " nohead" << std::endl;
+      out << "set arrow from " << Mass.xl2 << ",0 to " << Mass.xl2 << "," << Mass.pl2 << " nohead" << std::endl;
+      out << "set arrow from " << Mass.xl1 << ",0 to " << Mass.xl1 << "," << Mass.pl1 << " nohead" << std::endl;
+      out << "set arrow from " << Mass.median << ",0 to " << Mass.median << "," << Mass.pmed << " nohead" << std::endl;
+      out << "set arrow from " << Mass.xr1 << ",0 to " << Mass.xr1 << "," << Mass.pr1 << " nohead" << std::endl;
+      out << "set arrow from " << Mass.xr2 << ",0 to " << Mass.xr2 << "," << Mass.pr2 << " nohead" << std::endl;
+      out << "set arrow from " << Mass.xr3 << ",0 to " << Mass.xr3 << "," << Mass.pr3 << " nohead" << std::endl;
+      out << "set xlabel \"Mass\"" << std::endl;
+      out << "plot \"histM.txt\" with lines notitle" << std::endl;     
+      out.close();
+
+      struct Prob2d contours;
+      contours = ProbContours2D(rvals, mvals, probRM, numradius, nummass);
       
+      std::cout << "sigma1 = " << contours.sigma1 << " sigma2 = " << contours.sigma2 << " sigma3 = " << contours.sigma3 << std::endl;
+      
+      out.open("gplot.txt");
+      out << "set xlabel \"Radius\"" << std::endl;
+      out << "set ylabel \"Mass\"" << std::endl;
+      out << "plot \"histM.txt\" with lines notitle" << std::endl;
+      out << "set dgrid3d 80,80" << std::endl;
+      out << "set contours base" << std::endl;
+      out << "set cntrparam levels discrete " << contours.sigma1 << "," << contours.sigma2 << "," << contours.sigma3 << std::endl;
+      out << "splot \"histRM.txt\" with lines notitle"<< std::endl;
+      out << "unset surface; set view map; replot" << std::endl;
+
+
+
+      out.close();
+
 
     return 0;
  } 

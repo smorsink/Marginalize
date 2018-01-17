@@ -1,0 +1,7 @@
+unset dgrid3d 
+unset contours
+set dgrid3d 80,80
+set contours base
+set cntrparam levels discrete 0.0001
+splot "histRM.txt"
+unset surface
